@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>DJ Songlist</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <style>
+    :root{
+      --bg: #0a0b10;
+      --bg2:#0b0f1b;
+      --panel:#0f1322;
+      --panel2:#131933;
+      --ink:#f0f3fa;
+      --muted:#aeb4c2;
+      --border:#252c45;
+      --accent:#7ddcff;   /* cyan */
+      --accent2:#8df9cc;  /* mint */
+      --focus:#171e3b;
+      --row:#0d1227;
+      --row-alt:#0e142d;
+      --badge-cleaned:#86e9ff;
+      --badge-clean:#96f3d8;
+      --radius:14px;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --stick:0px; /* header height for sticky table head (set by JS) */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--ink);
+      background:
+        radial-gradient(1200px 600px at -10% -20%, #14274a 0%, transparent 60%),
+        radial-gradient(1000px 600px at 120% -10%, #1b2a52 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg), #090b13 60%, #080a10 100%);
+      font:15px/1.45 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      letter-spacing:.2px;
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:22px 18px 44px}
+
+    /* HEADER */
+    header{
+      position:sticky; top:0; z-index:50;
+      background:linear-gradient(180deg, rgba(10,12,18,.85), rgba(10,12,18,.65) 70%, transparent);
+      backdrop-filter: blur(6px) saturate(140%);
+      padding:14px 0 16px;
+    }
+    .titlebar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; font-weight:800; font-size:20px; letter-spacing:.3px;
+    }
+    .brand .dot{
+      width:18px;height:18px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, var(--accent) 0%, #67e0ff 40%, #2bc4ff 70%, #1899ff 100%);
+      box-shadow:0 0 0 4px rgba(125,220,255,.12), 0 0 30px rgba(125,220,255,.32);
+    }
+    .meta{color:var(--muted);font-size:12px}
+
+    /* CONTROLS */
+    .controls{
+      display:grid; grid-template-columns: 1fr auto auto auto; gap:10px; align-items:center;
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--border); border-radius:var(--radius); padding:12px; box-shadow:var(--shadow);
+    }
+    @media (max-width:880px){ .controls{grid-template-columns:1fr 1fr 1fr} }
+    @media (max-width:620px){ .controls{grid-template-columns:1fr 1fr} }
+
+    /* Search */
+    .search{ position:relative; grid-column:1 / -1 }
+    @media (min-width:881px){ .search{ grid-column:1 / 2 } }
+    .search input{
+      width:100%; padding:13px 44px 13px 14px;
+      border-radius:12px; border:1px solid var(--border);
+      background:linear-gradient(180deg,#0e1426,#101733);
+      color:var(--ink); outline:none;
+      transition:border-color .15s, box-shadow .15s;
+      font-size:15px;
+    }
+    .search input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(125,220,255,.16) }
+    .search .icon{ position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--muted) }
+
+    /* Button */
+    .btn{
+      appearance:none; border:none; cursor:pointer; user-select:none;
+      padding:12px 14px; border-radius:12px; font-weight:700; letter-spacing:.2px;
+      background:linear-gradient(180deg,#101736,#0f1630); color:#d7e3ff;
+      border:1px solid var(--border); box-shadow:0 2px 0 rgba(255,255,255,.03) inset;
+      transition:transform .04s ease, box-shadow .15s ease, border-color .15s;
+      white-space:nowrap;
+    }
+    .btn:hover{ border-color:#2d375a; box-shadow:0 0 0 3px rgba(125,220,255,.12) }
+    .btn:active{ transform:translateY(1px) }
+    .btn.clear{ background:linear-gradient(180deg,#13223f,#101a33) }
+
+    /* CUSTOM SELECTS */
+    .csel{ position:relative; min-width:200px }
+    .csel-btn{
+      width:100%;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 14px; border-radius:12px; border:1px solid var(--border);
+      background:linear-gradient(180deg,#101736,#0f1630); color:var(--ink);
+      cursor:pointer; font-weight:600;
+      transition:border-color .15s, box-shadow .15s;
+    }
+    .csel-btn:hover, .csel-btn:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(125,220,255,.16) }
+    .csel-label{ opacity:.9 }
+    .csel-arrow{ opacity:.9 }
+    .csel-menu{
+      position:absolute; left:0; right:0; top:calc(100% + 8px);
+      background:linear-gradient(180deg,#0e1428,#101a36); border:1px solid var(--border);
+      border-radius:12px; box-shadow:var(--shadow); z-index:60;
+      max-height:280px; overflow:auto; padding:6px; display:none;
+    }
+    .csel.open .csel-menu{ display:block }
+    .csel-opt{
+      padding:10px 12px; border-radius:10px; cursor:pointer; color:var(--ink);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-weight:600;
+    }
+    .csel-opt:hover, .csel-opt[aria-selected="true"]{ background:#172248 }
+    .csel-opt small{ color:var(--muted); font-weight:500 }
+
+    /* Chips */
+    .chips{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-left:auto; grid-column:1 / -1 }
+    @media (min-width:881px){ .chips{ grid-column:auto } }
+    .chip{ font-size:12px; color:var(--muted); background:#0f1328; border:1px solid var(--border); padding:6px 10px; border-radius:999px }
+
+    /* TABLE */
+    .table{ margin-top:14px; border:1px solid var(--border); border-radius:var(--radius); overflow:clip;
+      background:linear-gradient(180deg,#0c1228,#0d1430); box-shadow:var(--shadow) }
+    table{ width:100%; border-collapse:separate; border-spacing:0 }
+    thead th{
+      position:sticky; top:var(--stick); z-index:5;
+      text-align:left; font-weight:800; font-size:13px; letter-spacing:.25px;
+      padding:12px 14px; background:linear-gradient(180deg,#11193a,#0f1531);
+      border-bottom:1px solid var(--border); user-select:none; cursor:pointer; white-space:nowrap;
+    }
+    thead th:not(:last-child){ box-shadow: inset -1px 0 0 rgba(255,255,255,.03) }
+    thead th.sortable:hover{ background:#141d42 }
+    thead th .sort{ margin-left:6px; color:var(--muted); font-size:11px; opacity:.9 }
+
+    tbody tr{ background:var(--row) }
+    tbody tr:nth-child(even){ background:var(--row-alt) }
+    tbody tr:hover{ background:var(--focus) }
+    td{ padding:14px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle }
+    .fmt,.cat,.clean{ white-space:nowrap }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+      font-size:12px; line-height:1; border:1px solid var(--border); background:rgba(255,255,255,.03)
+    }
+    .badge.cleaned{ color:var(--badge-cleaned); border-color:#214b56; background:rgba(134,233,255,.08) }
+    .badge.clean{   color:var(--badge-clean);   border-color:#1e4d43; background:rgba(150,243,216,.08) }
+
+    .empty{ padding:30px; color:var(--muted); text-align:center; border-top:1px dashed var(--border) }
+
+    /* RESPONSIVE: hide Format on small screens */
+    @media (max-width:780px){ thead th:nth-child(3), td:nth-child(3){ display:none } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header id="hdr">
+      <div class="titlebar">
+        <div class="brand"><span class="dot" aria-hidden="true"></span><span>DJ Songlist</span></div>
+        <div class="meta"><span id="count">0</span> songs • instant search • click headers to sort</div>
+      </div>
+
+      <div class="controls">
+        <!-- Search -->
+        <div class="search">
+          <input id="q" type="search" placeholder="Search by artist, song, category, or clean status…" autocomplete="off" spellcheck="false">
+          <div class="icon">⌕</div>
+        </div>
+
+        <!-- Custom Selects (built from hidden native selects) -->
+        <div class="csel" data-select="filterCategory" aria-label="Filter by category">
+          <button class="csel-btn" type="button">
+            <span class="csel-label" data-label>All Categories</span>
+            <span class="csel-arrow">▾</span>
+          </button>
+          <div class="csel-menu" role="listbox" aria-label="Categories"></div>
+        </div>
+
+        <div class="csel" data-select="filterClean" aria-label="Filter by clean status">
+          <button class="csel-btn" type="button">
+            <span class="csel-label" data-label>All Clean Status</span>
+            <span class="csel-arrow">▾</span>
+          </button>
+          <div class="csel-menu" role="listbox" aria-label="Clean"></div>
+        </div>
+
+        <button class="btn clear" id="clearAll" type="button" title="Reset search, filters, and sorting">Clear All</button>
+
+        <!-- Active filters summary -->
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <!-- Hidden native selects (source of truth; ensures robustness) -->
+      <select id="filterCategory" style="position:absolute; left:-9999px; width:1px; height:1px;">
+        <option value="">All Categories</option>
+      </select>
+      <select id="filterClean" style="position:absolute; left:-9999px; width:1px; height:1px;">
+        <option value="">All Clean Status</option>
+        <option value="Clean">Clean</option>
+        <option value="Cleaned">Cleaned</option>
+      </select>
+    </header>
+
+    <section class="table">
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable" data-key="artist">Artist <span class="sort" id="sort-artist">↕</span></th>
+            <th class="sortable" data-key="title">Song Title <span class="sort" id="sort-title">↕</span></th>
+            <th class="sortable" data-key="format">Format <span class="sort" id="sort-format">↕</span></th>
+            <th class="sortable" data-key="category">Category <span class="sort" id="sort-category">↕</span></th>
+            <th class="sortable" data-key="cleanStatus">Clean Status <span class="sort" id="sort-cleanStatus">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty" hidden>No results. Clear filters or simplify your search.</div>
+    </section>
+  </div>
+
+  <!-- Data file: must set window.SONGS = [...] -->
+  <script src="songs.js"></script>
+
+  <script>
+    /* ===== Utilities ===== */
+    const $  = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const norm = s => (s ?? "").toString().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").trim();
+    const escapeHTML = s => (s ?? "").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#39;");
+    const debounce = (fn,ms=120)=>{ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+
+    /* ===== Sticky head offset (no chopping) ===== */
+    function updateStickyOffset(){
+      const h = document.getElementById('hdr');
+      const top = h ? h.getBoundingClientRect().height : 0;
+      document.documentElement.style.setProperty('--stick', top + 'px');
+    }
+    window.addEventListener('resize', debounce(updateStickyOffset, 60));
+    window.addEventListener('load', updateStickyOffset);
+
+    /* ===== State ===== */
+    let sortKey = "artist";
+    let sortDir = "asc";
+    let allSongs = Array.isArray(window.SONGS) ? window.SONGS.slice() : [];
+
+    const rowsEl  = $("#rows");
+    const countEl = $("#count");
+    const emptyEl = $("#empty");
+
+    /* ===== Build Category options from data ===== */
+    function initFilters(){
+      const catSel = $("#filterCategory");
+      const cats = [...new Set(allSongs.map(s => s.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      for (const c of cats){
+        const o = document.createElement("option");
+        o.value = c; o.textContent = c;
+        catSel.appendChild(o);
+      }
+    }
+
+    /* ===== Custom Selects ===== */
+    function enhanceSelect(id){
+      const native = document.getElementById(id);
+      const host   = document.querySelector(`.csel[data-select="${id}"]`);
+      if (!native || !host) return;
+
+      const btn = host.querySelector('.csel-btn');
+      const labelEl = btn.querySelector('[data-label]');
+      const menu = host.querySelector('.csel-menu');
+
+      function buildMenu(){
+        menu.innerHTML = "";
+        for (const opt of native.options){
+          const div = document.createElement('div');
+          div.className = 'csel-opt';
+          div.setAttribute('role','option');
+          div.dataset.value = opt.value;
+          if (opt.value === native.value) div.setAttribute('aria-selected','true');
+          div.innerHTML = `<span>${escapeHTML(opt.text)}</span>${opt.value === native.value ? '<small>Selected</small>' : ''}`;
+          div.addEventListener('click', ()=> selectValue(opt.value, opt.text));
+          menu.appendChild(div);
+        }
+      }
+      function selectValue(value, text){
+        native.value = value;
+        native.dispatchEvent(new Event('change', {bubbles:true}));
+        labelEl.textContent = text || (native.options[native.selectedIndex]?.text || "");
+        close();
+        buildMenu();
+      }
+      function open(){ host.classList.add('open'); positionMenu(); }
+      function close(){ host.classList.remove('open'); }
+      function positionMenu(){
+        // keep menu within viewport bottom
+        const rect = menu.getBoundingClientRect();
+        const over = rect.bottom - (window.innerHeight - 12);
+        if (over > 0) menu.style.maxHeight = Math.max(180, menu.offsetHeight - over) + 'px';
+      }
+
+      btn.addEventListener('click', (e)=>{ e.stopPropagation(); host.classList.contains('open') ? close() : open(); });
+      document.addEventListener('click', (e)=>{ if (!host.contains(e.target)) close(); });
+      document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') close(); });
+
+      // init
+      labelEl.textContent = native.options[native.selectedIndex]?.text || native.options[0]?.text || "";
+      buildMenu();
+    }
+
+    /* ===== Search scoring: exact > startsWith > includes > token hits ===== */
+    function scoreSong(song, q){
+      if(!q) return 0;
+      const nq = norm(q);
+      const pool = [song.artist, song.title, song.category, song.cleanStatus, song.format].map(norm);
+      let best = 0;
+      for (const f of pool){
+        if (!f) continue;
+        if (f === nq) best = Math.max(best, 100);
+        else if (f.startsWith(nq)) best = Math.max(best, 92);
+        else if (f.includes(nq)) best = Math.max(best, 78);
+        const toks = nq.split(/\s+/).filter(Boolean);
+        if (toks.length){
+          const hit = toks.filter(t=>f.includes(t)).length;
+          if (hit){
+            const p = Math.round(52 + (hit/toks.length)*20); // 52..72
+            best = Math.max(best, p);
+          }
+        }
+      }
+      // bias artist/title slightly
+      const at = [norm(song.artist), norm(song.title)];
+      if (at.some(v=>v===nq)) best += 6;
+      else if (at.some(v=>v.startsWith(nq))) best += 3;
+      return best;
+    }
+
+    /* ===== Render ===== */
+    function renderRows(list){
+      rowsEl.innerHTML = "";
+      countEl.textContent = list.length.toString();
+      emptyEl.hidden = list.length !== 0;
+
+      const frag = document.createDocumentFragment();
+      for (const s of list){
+        const tr = document.createElement("tr");
+        const badgeClass = s.cleanStatus === "Cleaned" ? "badge cleaned" : "badge clean";
+        tr.innerHTML = `
+          <td>${escapeHTML(s.artist)}</td>
+          <td>${escapeHTML(s.title)}</td>
+          <td class="fmt">${escapeHTML((s.format||"").toLowerCase())}</td>
+          <td class="cat">${escapeHTML(s.category || "")}</td>
+          <td class="clean"><span class="${badgeClass}">${escapeHTML(s.cleanStatus || "")}</span></td>
+        `;
+        frag.appendChild(tr);
+      }
+      rowsEl.appendChild(frag);
+    }
+
+    function renderChips(){
+      const q = $("#q").value.trim();
+      const cat = $("#filterCategory").value;
+      const clean = $("#filterClean").value;
+
+      const chips = [];
+      if (q)    chips.push(`Search: “${escapeHTML(q)}”`);
+      if (cat)  chips.push(`Category: ${escapeHTML($("#filterCategory").selectedOptions[0].text)}`);
+      if (clean)chips.push(`Clean: ${escapeHTML(clean)}`);
+      chips.push(`Sort: ${escapeHTML(sortKey)} ${sortDir === "asc" ? "↑" : "↓"}`);
+
+      $("#chips").innerHTML = chips.map(t=>`<span class="chip">${t}</span>`).join("");
+    }
+
+    /* ===== Sort & Filter pipeline ===== */
+    function apply(){
+      const q    = $("#q").value;
+      const cat  = $("#filterCategory").value;
+      const cln  = $("#filterClean").value;
+
+      // Filter
+      let list = allSongs.filter(s=>{
+        if (cat && s.category !== cat) return false;
+        if (cln && s.cleanStatus !== cln) return false;
+        return true;
+      });
+
+      // Search
+      let scored = q
+        ? list.map(s => ({ s, score: scoreSong(s, q) })).filter(o => o.score > 0)
+        : list.map(s => ({ s, score: 0 }));
+
+      // Sort (by search rank if searching; then current sort)
+      if (q){
+        scored.sort((a,b)=>{
+          if (b.score !== a.score) return b.score - a.score;
+          const va = (a.s[sortKey] ?? "").toString();
+          const vb = (b.s[sortKey] ?? "").toString();
+          const cmp = va.localeCompare(vb, undefined, {numeric:true, sensitivity:"base"});
+          return sortDir === "asc" ? cmp : -cmp;
+        });
+      } else {
+        scored.sort((a,b)=>{
+          const va = (a.s[sortKey] ?? "").toString();
+          const vb = (b.s[sortKey] ?? "").toString();
+          const cmp = va.localeCompare(vb, undefined, {numeric:true, sensitivity:"base"});
+          return sortDir === "asc" ? cmp : -cmp;
+        });
+      }
+
+      renderRows(scored.map(o=>o.s));
+      renderChips();
+    }
+
+    /* ===== Sorting UI ===== */
+    function setSort(key){
+      if (sortKey === key) sortDir = (sortDir === "asc" ? "desc" : "asc");
+      else { sortKey = key; sortDir = "asc"; }
+      updateSortIndicators(); apply();
+    }
+    function updateSortIndicators(){
+      $$(".sort").forEach(e=>e.textContent="↕");
+      const el = document.getElementById("sort-"+sortKey);
+      if (el) el.textContent = (sortDir === "asc" ? "↑" : "↓");
+    }
+
+    /* ===== Clear All ===== */
+    function clearAll(){
+      $("#q").value = "";
+      $("#filterCategory").value = "";
+      $("#filterClean").value = "";
+      // reflect into custom selects
+      $$(`.csel`).forEach(host=>{
+        const id = host.getAttribute('data-select');
+        const native = document.getElementById(id);
+        const label = native.options[0]?.text || "All";
+        host.querySelector('[data-label]').textContent = label;
+        host.classList.remove('open');
+      });
+      sortKey = "artist"; sortDir = "asc";
+      updateSortIndicators(); apply();
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+
+    /* ===== Init ===== */
+    function init(){
+      if (!Array.isArray(window.SONGS)){
+        console.error("songs.js missing or SONGS not defined on window");
+        allSongs = [];
+      } else {
+        allSongs = window.SONGS.map(s=>({
+          artist: s.artist ?? "",
+          title: s.title ?? "",
+          format: (s.format ?? "").toLowerCase(),
+          category: s.category ?? "",
+          cleanStatus: s.cleanStatus === "Cleaned" ? "Cleaned" : (s.cleanStatus === "Clean" ? "Clean" : "")
+        }));
+      }
+
+      initFilters();           // populate hidden native selects
+      enhanceSelect('filterCategory');
+      enhanceSelect('filterClean');
+
+      updateStickyOffset();
+      updateSortIndicators();
+      apply();
+
+      // events
+      $("#q").addEventListener("input", debounce(apply, 80));
+      $("#filterCategory").addEventListener("change", apply);
+      $("#filterClean").addEventListener("change", apply);
+      document.querySelector("thead").addEventListener("click", (e)=>{
+        const th = e.target.closest("th.sortable"); if (th) setSort(th.dataset.key);
+      });
+      $("#clearAll").addEventListener("click", clearAll);
+    }
+
+    window.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
