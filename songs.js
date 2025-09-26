@@ -354,5 +354,19 @@ window.SONGS = [
   {"artist": "24k.UptownMash Clean", "title": "Bruno Mars - 92325, 3.24 PM", "format": "mp3", "category": "R&B/Soul/Disco", "cleanStatus": "Cleaned"},
   {"artist": "300 Violin Orchestra", "title": "Jorge Quintero", "format": "mp3", "category": "Instrumental", "cleanStatus": "Clean"},
   {"artist": "", "title": "500 Miles Im Gonna Be", "format": "mp3", "category": "Rock", "cleanStatus": "Clean"},
-  {"artist": "Abba", "title": "Dancing Queen (Official Music Video Remastered)", "format": "mp3", "category": "Pop", "cleanStatus": "Clean"}
+  {"artist": "Abba", "title": "Dancing Queen (Official Music Video Remastered)", "format": "mp3", "category": "Pop", "cleanStatus": "Clean"},
+  { artist: "Baha Men", title: "Who Let The Dogs Out", format: "mp3", category: "Pop", cleanStatus: "Clean" },
+  { artist: "Billy Ray Cyrus", title: "Achy Breaky Heart", format: "mp3", category: "Country", cleanStatus: "Clean" },
+  { artist: "Ray Parker Jr.", title: "Ghostbusters", format: "mp3", category: "Pop", cleanStatus: "Clean" },
+  { artist: "Michael Jackson", title: "Smooth Criminal", format: "mp3", category: "Pop", cleanStatus: "Clean" },
+  { artist: "Traditional", title: "Chicken Dance", format: "mp3", category: "Dance/Line", cleanStatus: "Clean" },
+  { artist: "Gloria Estefan", title: "Conga", format: "mp3", category: "Latin/Dance", cleanStatus: "Clean" },
+  { artist: "PSY", title: "Gangnam Style", format: "mp3", category: "Pop", cleanStatus: "Clean" },
+  { artist: "iLoveMemphis", title: "Hit The Quan", format: "mp3", category: "Hip-Hop", cleanStatus: "Cleaned" },
+  { artist: "Bobby Pickett", title: "Monster Mash", format: "mp3", category: "Novelty", cleanStatus: "Clean" },
+  { artist: "Ice Age Cast", title: "Sid Shuffle", format: "mp3", category: "Kids/Pop", cleanStatus: "Clean" },
+  { artist: "Traditional", title: "Hokey Pokey", format: "mp3", category: "Dance/Line", cleanStatus: "Clean" },
+  { artist: "Survivor", title: "Eye of the Tiger (Remix)", format: "mp3", category: "Rock", cleanStatus: "Clean" },
+  { artist: "Europe", title: "The Final Countdown (Remix)", format: "mp3", category: "Rock", cleanStatus: "Clean" },
+  { artist: "Ozzy Osbourne", title: "Crazy Train (Remix)", format: "mp3", category: "Rock", cleanStatus: "Clean" }
 ];
