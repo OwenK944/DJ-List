@@ -172,7 +172,12 @@
                 
                 const response = await fetch('songs.json');
                 if (!response.ok) throw new Error('Failed to load songs');
-                rawSongs = await response.json();
+                const fetchedData = await response.json();
+                
+                // Deduplicate the array by creating a unique key for Title + Artist
+                rawSongs = Array.from(new Map(fetchedData.map(song => 
+                    [`${song.t}-${song.a}`, song]
+                )).values());
                 
                 renderSongs(getFilteredAndSortedSongs());
                 lucide.createIcons();
