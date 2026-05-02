@@ -149,9 +149,7 @@
     </div>
 
     <script>
-        // Full processed database fetched from JSON
         let rawSongs = [];
-
         let crate = new Set();
         
         // DOM Elements
@@ -171,13 +169,25 @@
                 songTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-12 text-zinc-500 font-semibold animate-pulse">Loading booth database...</td></tr>';
                 
                 const response = await fetch('songs.json');
-                if (!response.ok) throw new Error('Failed to load songs');
+                if (!response.ok) throw new Error('Failed to load songs.json');
                 const fetchedData = await response.json();
                 
-                // Deduplicate the array by creating a unique key for Title + Artist
-                rawSongs = Array.from(new Map(fetchedData.map(song => 
-                    [`${song.t}-${song.a}`, song]
-                )).values());
+                // Foolproof Deduplication logic
+                const uniqueSongsMap = new Map();
+                fetchedData.forEach(song => {
+                    if (song && song.t && song.a) {
+                        // Standardize string formatting to catch invisible duplicate errors
+                        const cleanTitle = song.t.trim().toLowerCase();
+                        const cleanArtist = song.a.trim().toLowerCase();
+                        const key = `${cleanTitle}|${cleanArtist}`;
+                        
+                        if (!uniqueSongsMap.has(key)) {
+                            uniqueSongsMap.set(key, song);
+                        }
+                    }
+                });
+
+                rawSongs = Array.from(uniqueSongsMap.values());
                 
                 renderSongs(getFilteredAndSortedSongs());
                 lucide.createIcons();
@@ -208,7 +218,7 @@
         }
 
         function getFilteredAndSortedSongs() {
-            const term = searchInput.value.toLowerCase();
+            const term = searchInput.value.toLowerCase().trim();
             const genre = genreFilter.value;
             const era = eraFilter.value;
             const sort = sortFilter.value;
@@ -231,7 +241,6 @@
         }
 
         function renderSongs(songList) {
-            // Using a DocumentFragment for performant DOM updates
             const fragment = document.createDocumentFragment();
             
             songList.forEach(song => {
@@ -241,7 +250,6 @@
                 const tr = document.createElement('tr');
                 tr.className = 'song-row transition-colors group border-b border-zinc-800/30';
                 
-                // Color code genres for quick visual scanning
                 let genreColor = "text-zinc-400";
                 if(song.g === 'Pop') genreColor = "text-pink-400";
                 if(song.g === 'Hip-Hop/Rap') genreColor = "text-amber-400";
@@ -250,7 +258,6 @@
                 if(song.g === 'Country') genreColor = "text-green-400";
                 if(song.g === 'R&B/Soul') genreColor = "text-purple-400";
 
-                // Popularity Bar Color
                 let popColor = "bg-green-500";
                 if(song.p < 80) popColor = "bg-yellow-500";
                 if(song.p < 60) popColor = "bg-red-500";
@@ -291,18 +298,16 @@
             lucide.createIcons();
         }
 
-        // Crate Logic
         function toggleCrateItem(id, title, artist) {
             if (crate.has(id)) {
                 crate.delete(id);
             } else {
                 crate.add(id);
-                // Store minimal data in a global object if needed, but we can reconstruct it
                 window.crateData = window.crateData || {};
                 window.crateData[id] = { title, artist };
             }
             updateCrateUI();
-            updateView(); // Re-render to update the checkmark buttons
+            updateView(); 
         }
 
         function updateCrateUI() {
